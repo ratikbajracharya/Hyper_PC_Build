@@ -5,33 +5,6 @@ const HomePage = () => {
   return (
     <div className="font-['Roboto'] text-gray-900">
       <header className="sticky top-0 bg-white h-[66px] shadow-md z-50 px-[5vw] py-[13px]">
-        <nav className="flex justify-between items-center text-xs pt-3 flex-wrap">
-          <div className="flex items-center space-x-4">
-            <img src="/images/logo.png" alt="HPB logo" className="w-[90px] h-[38px]" />
-            <ul className="flex items-center uppercase font-semibold text-sm space-x-3" role="navigation">
-              <li><Link to="/prebuilt-pc">Prebuilt PC</Link></li>
-              <li><Link to="/monitors">Monitors</Link></li>
-              <li><Link to="/components">Components</Link></li>
-              <li><Link to="/laptops">Laptops</Link></li>
-              <li><Link to="/accessories">Accessories</Link></li>
-              <li><Link to="/build-my-pc">Build my PC</Link></li>
-            </ul>
-          </div>
-
-          {/* Search and user menu */}
-          <div className="flex items-center mt-2 lg:mt-0">
-            <input
-              className="bg-[#f7f8fd] border border-gray-400 rounded px-4 py-2 w-[34vw] mr-4"
-              placeholder="Search for products, brands and more"
-              aria-label="Search bar"
-            />
-            <div className="flex space-x-4 text-sm font-medium">
-              <div className="cursor-pointer">Profile</div>
-              <div className="cursor-pointer">Wishlist</div>
-              <div className="cursor-pointer">Bag</div>
-            </div>
-          </div>
-        </nav>
       </header>
 
       {/* Main Body */}
