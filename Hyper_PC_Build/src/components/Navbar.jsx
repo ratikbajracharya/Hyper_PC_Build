@@ -14,7 +14,6 @@ const Navbar = () => {
   return (
     <header className="sticky top-0 bg-white h-[66px] shadow-md z-50 px-[5vw] py-[13px]">
       <nav className="flex justify-between items-center text-xs pt-3 flex-wrap">
-        {/* Left: Logo and Navigation */}
         <div className="flex items-center space-x-4">
           <NavLink to="/home">
             <img src="/images/Logo.jpg" alt="HPB logo" className="w-[90px] h-[38px]" />
@@ -37,7 +36,6 @@ const Navbar = () => {
           </ul>
         </div>
 
-        {/* Right: Search and User Menu */}
         <div className="flex items-center mt-2 lg:mt-0">
           <input
             className="bg-[#f7f8fd] border border-gray-400 rounded px-4 py-2 w-[34vw] mr-4"

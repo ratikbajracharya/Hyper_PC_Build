@@ -12,7 +12,6 @@ const Laptops = () => {
 
   return (
     <div className="flex bg-gray-50 min-h-screen">
-      {/* Filter Sidebar */}
       <aside className="w-1/4 p-6 border-r bg-white">
         <h2 className="text-xl font-bold mb-6">Filter By</h2>
 
@@ -48,7 +47,6 @@ const Laptops = () => {
         </div>
       </aside>
 
-      {/* Product Grid */}
       <main className="w-3/4 p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {products.map((product) => (
           <div
