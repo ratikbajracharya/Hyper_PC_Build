@@ -1,17 +1,23 @@
 import React from "react";
+import { useCart } from "../CartContext";
 
 const PrebuiltPC = () => {
   const products = [
-    { id: 1, name: "pc 1", image: "/images/PC/pc1.webp", price: "$1200" },
-    { id: 2, name: "pc 2", image: "/images/PC/pc2.webp", price: "$1400" },
-    { id: 3, name: "pc 3", image: "/images/PC/pc3.png", price: "$850" },
-    { id: 4, name: "pc 4", image: "/images/PC/pc4.webp", price: "$2000" },
-    { id: 5, name: "pc 5", image: "/images/PC/pc5.png", price: "$650" },
-    { id: 6, name: "pc 6", image: "/images/PC/pc6.webp", price: "$700" },
+    { id: "pre-1", name: "PC 1", image: "/images/PC/pc1.webp", price: 1200 },
+    { id: "pre-2", name: "PC 2", image: "/images/PC/pc2.webp", price: 1400 },
+    { id: "pre-3", name: "PC 3", image: "/images/PC/pc3.png", price: 850 },
+    { id: "pre-4", name: "PC 4", image: "/images/PC/pc4.webp", price: 2000 },
+    { id: "pre-5", name: "PC 5", image: "/images/PC/pc5.png", price: 650 },
+    { id: "pre-6", name: "PC 6", image: "/images/PC/pc6.webp", price: 700 },
   ];
+
+  const { addToCart } = useCart();
+
+  const handleAddToBag = (product) => addToCart(product);
 
   return (
     <div className="flex bg-gray-50 min-h-screen">
+      {/* Filter Sidebar */}
       <aside className="w-1/4 p-6 border-r bg-white">
         <h2 className="text-xl font-bold mb-6">Filter By</h2>
 
@@ -47,11 +53,12 @@ const PrebuiltPC = () => {
         </div>
       </aside>
 
-      <main className="w-3/4 p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Product Grid */}
+      <main className="w-full md:w-3/4 p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {products.map((product) => (
           <div
             key={product.id}
-            className="border rounded-lg p-4 bg-white shadow hover:shadow-md transition"
+            className="border rounded-lg p-4 bg-white shadow hover:shadow-md transition flex flex-col"
           >
             <img
               src={product.image}
@@ -59,7 +66,22 @@ const PrebuiltPC = () => {
               className="w-full h-56 object-contain rounded mb-4 bg-gray-100"
             />
             <h3 className="font-semibold text-lg mb-1">{product.name}</h3>
-            <p className="text-gray-700 text-sm">{product.price}</p>
+
+            <p className="text-red-600 font-semibold bg-red-100 px-3 py-1 inline-block rounded mb-3">
+              ${product.price}
+            </p>
+
+            <div className="mt-auto flex flex-col gap-2">
+              <button className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition w-full">
+                Buy Now
+              </button>
+              <button
+                onClick={() => handleAddToBag(product)}
+                className="w-full bg-gray-800 text-white py-2 rounded hover:bg-gray-900 transition"
+              >
+                Add to Bag
+              </button>
+            </div>
           </div>
         ))}
       </main>

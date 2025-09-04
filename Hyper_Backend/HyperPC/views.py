@@ -1,44 +1,33 @@
-from django.shortcuts import render
+from django.http import JsonResponse
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
-from django.http import JsonResponse
-from rest_framework.decorators import api_view
-from rest_framework import status
-from .models import Profile
+from django.views.decorators.csrf import csrf_exempt
+import json
 
-@api_view(['POST'])
-def register(request):
-    data = request.data
-    try:
-        user = User.objects.create_user(
-            username=data['username'],
-            email=data['email'],
-            password=data['password'],
-            first_name=data['fullName']
-        )
-        Profile.objects.create(user=user, phone=data['phone'])
-        return JsonResponse({"message": "Registration successful"}, status=201)
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=400)
-    
+@csrf_exempt
+def register_user(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        username = data.get('username')
+        email = data.get('email')
+        password = data.get('password')
 
-@api_view(['POST'])
-def login(request):
-    data = request.data
-    username= data.get('userInput')
-    password = data.get('password')
+        if User.objects.filter(username=username).exists():
+            return JsonResponse({'error': 'Username already exists'}, status=400)
 
-    try:
-        if username.isdigit():
-            profile = Profile.objects.get(phone=username)
-            username = profile.user.username
-        else:
-            username = username
+        user = User.objects.create_user(username=username, email=email, password=password)
+        return JsonResponse({'message': 'User created', 'username': user.username})
 
-        user = authenticate(username=username, password=password)
+@csrf_exempt
+def login_user(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        user_input = data.get('userInput')
+        password = data.get('password')
+
+        user = authenticate(username=user_input, password=password)
+
         if user:
-            return JsonResponse({"message": "Login successful", "username": user.username})
+            return JsonResponse({'message': 'Login successful', 'username': user.username})
         else:
-            return JsonResponse({"error": "Invalid credentials"}, status=401)
-    except Profile.DoesNotExist:
-        return JsonResponse({"error": "User not found"}, status=404)
+            return JsonResponse({'error': 'Invalid credentials'}, status=400)

@@ -1,4 +1,4 @@
-import { Routes, Route, BrowserRouter as Router } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -13,29 +13,30 @@ import Profile from "./pages/Profile";
 import Wishlist from "./pages/Wishlist";
 import Bag from "./pages/Bag";
 import Layout from "./components/Layout";
+import Checkout from "./pages/Checkout";
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<LoginPage />} />
-        <Route path="/reg" element={<RegisterPage />} />
+    <Routes>
+      {/* Public auth routes */}
+      <Route path="/" element={<LoginPage />} />
+      <Route path="/reg" element={<RegisterPage />} />
 
-       
-        <Route element={<Layout />}>
-          <Route path="/home" element={<HomePage />} />
-          <Route path="/prebuilt-pc" element={<PrebuiltPC />} />
-          <Route path="/monitors" element={<Monitors />} />
-          <Route path="/components" element={<ComponentsPage />} />
-          <Route path="/laptops" element={<Laptops />} />
-          <Route path="/accessories" element={<Accessories />} />
-          <Route path="/build-my-pc" element={<BuildMyPC />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/wishlist" element={<Wishlist />} />
-          <Route path="/bag" element={<Bag />} />
-        </Route>
-      </Routes>
-    </Router>
+      {/* Pages with Navbar */}
+      <Route element={<Layout />}>
+        <Route path="/home" element={<HomePage />} />
+        <Route path="/prebuilt-pc" element={<PrebuiltPC />} /> {/* Keep hyphen */}
+        <Route path="/monitors" element={<Monitors />} />
+        <Route path="/components" element={<ComponentsPage />} />
+        <Route path="/laptops" element={<Laptops />} />
+        <Route path="/accessories" element={<Accessories />} />
+        <Route path="/build-my-pc" element={<BuildMyPC />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/wishlist" element={<Wishlist />} />
+        <Route path="/bag" element={<Bag />} />
+        <Route path="/checkout" element={<Checkout />} />
+      </Route>
+    </Routes>
   );
 }
 

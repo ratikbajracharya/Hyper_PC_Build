@@ -9,14 +9,30 @@ const LoginPage = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+
+    if (userInput.trim() === "" || password.trim() === "") {
+      alert("Please fill in both fields");
+      return;
+    }
+
     try {
       const response = await axios.post('http://127.0.0.1:8000/api/login/', {
-        userInput, 
+        userInput,
         password,
-      })
-      navigate("/");
+      });
+
+      console.log("Login response:", response);
+
+      if (response.status === 200) {
+        alert("Login successful! Redirecting...");
+        navigate("/home"); // Navigate to home page on success
+      } else {
+        alert("Login failed. Please check your credentials.");
+      }
+    } catch (error) {
+      console.log(error);
+      alert("Login failed. Please check your credentials.");
     }
-    catch(error){console.log(error), alert("Please fill in both fields")};
   };
 
   return (
@@ -42,10 +58,11 @@ const LoginPage = () => {
             required
           />
           <button type="submit" style={styles.button}>Login</button>
-          
-        <p style={styles.redirectText}>
-          Don't haven an Account yet? Register with us <span style={styles.link} onClick={() => navigate("/reg")}>Register</span>
-        </p>
+
+          <p style={styles.redirectText}>
+            Don't have an Account yet? Register with us{" "}
+            <span style={styles.link} onClick={() => navigate("/reg")}>Register</span>
+          </p>
         </form>
       </div>
     </div>
@@ -101,12 +118,12 @@ const styles = {
     cursor: "pointer",
     transition: "background-color 0.3s",
   },
-   link: {
+  link: {
     color: "#3b82f6",
     cursor: "pointer",
     textDecoration: "underline",
   },
-    redirectText: {
+  redirectText: {
     marginTop: "1rem",
     fontSize: "0.85rem",
     color: "#666",

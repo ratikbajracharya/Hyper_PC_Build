@@ -1,18 +1,23 @@
 import React from "react";
+import { useCart } from "../CartContext";
 
 const Laptops = () => {
   const products = [
-    { id: 1, name: "laptop 1", image: "/images/Laptops/laptop1.jpg", price: "$1200" },
-    { id: 2, name: "laptop 2", image: "/images/Laptops/laptop2.jpg", price: "$1400" },
-    { id: 3, name: "laptop 3", image: "/images/Laptops/laptop3.jpg", price: "$850" },
-    { id: 4, name: "laptop 4", image: "/images/Laptops/laptop4.png", price: "$2000" },
-    { id: 5, name: "laptop 5", image: "/images/Laptops/laptop5.webp", price: "$650" },
-    { id: 6, name: "laptop 6", image: "/images/Laptops/laptop6.jpg", price: "$700" },
+    { id: "lap-1", name: "Laptop 1", image: "/images/Laptops/laptop1.jpg", price: 1200 },
+    { id: "lap-2", name: "Laptop 2", image: "/images/Laptops/laptop2.jpg", price: 1400 },
+    { id: "lap-3", name: "Laptop 3", image: "/images/Laptops/laptop3.jpg", price: 850 },
+    { id: "lap-4", name: "Laptop 4", image: "/images/Laptops/laptop4.png", price: 2000 },
+    { id: "lap-5", name: "Laptop 5", image: "/images/Laptops/laptop5.webp", price: 650 },
+    { id: "lap-6", name: "Laptop 6", image: "/images/Laptops/laptop6.jpg", price: 700 },
   ];
 
+  const { addToCart } = useCart();
+  const handleAddToBag = (product) => addToCart(product);
+
   return (
-    <div className="flex bg-gray-50 min-h-screen">
-      <aside className="w-1/4 p-6 border-r bg-white">
+    <div className="flex bg-gray-100 min-h-screen">
+      {/* Sidebar */}
+      <aside className="w-1/4 p-6 border-r bg-white hidden md:block">
         <h2 className="text-xl font-bold mb-6">Filter By</h2>
 
         <div className="mb-6">
@@ -47,11 +52,12 @@ const Laptops = () => {
         </div>
       </aside>
 
-      <main className="w-3/4 p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Products */}
+      <main className="w-full md:w-3/4 p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {products.map((product) => (
           <div
             key={product.id}
-            className="border rounded-lg p-4 bg-white shadow hover:shadow-md transition"
+            className="border rounded-lg p-4 bg-white shadow hover:shadow-md transition flex flex-col"
           >
             <img
               src={product.image}
@@ -59,7 +65,22 @@ const Laptops = () => {
               className="w-full h-56 object-contain rounded mb-4 bg-gray-100"
             />
             <h3 className="font-semibold text-lg mb-1">{product.name}</h3>
-            <p className="text-gray-700 text-sm">{product.price}</p>
+
+            <p className="text-red-600 font-semibold bg-red-100 px-3 py-1 inline-block rounded mb-3">
+              ${product.price}
+            </p>
+
+            <div className="mt-auto flex flex-col gap-2">
+              <button className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition w-full">
+                Buy Now
+              </button>
+              <button
+                onClick={() => handleAddToBag(product)}
+                className="w-full bg-gray-800 text-white py-2 rounded hover:bg-gray-900 transition"
+              >
+                Add to Bag
+              </button>
+            </div>
           </div>
         ))}
       </main>

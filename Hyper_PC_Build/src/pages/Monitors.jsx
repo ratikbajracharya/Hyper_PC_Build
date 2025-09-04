@@ -1,17 +1,37 @@
 import React from "react";
+import { useCart } from "../CartContext";
 
 const Monitors = () => {
   const products = [
-    { id: 1, name: "Monitor 1", image: "/images/monitors/monitor1.jpg", price: "$1200" },
-    { id: 2, name: "Monitor 2", image: "/images/monitors/monitor2.jpg", price: "$1400" },
-    { id: 3, name: "Monitor 3", image: "/images/monitors/monitor3.jpg", price: "$850" },
-    { id: 4, name: "Monitor 4", image: "/images/monitors/monitor4.webp", price: "$2000" },
-    { id: 5, name: "Monitor 5", image: "/images/monitors/monitor5.webp", price: "$650" },
-    { id: 6, name: "Monitor 6", image: "/images/monitors/monitor6.webp", price: "$700" },
+    { id: "mon-1", name: "Monitor 1", image: "/images/monitors/monitor1.jpg", price: 1200 },
+    { id: "mon-2", name: "Monitor 2", image: "/images/monitors/monitor2.jpg", price: 1400 },
+    { id: "mon-3", name: "Monitor 3", image: "/images/monitors/monitor3.jpg", price: 850 },
+    { id: "mon-4", name: "Monitor 4", image: "/images/monitors/monitor4.webp", price: 2000 },
+    { id: "mon-5", name: "Monitor 5", image: "/images/monitors/monitor5.webp", price: 650 },
+    { id: "mon-6", name: "Monitor 6", image: "/images/monitors/monitor6.webp", price: 700 },
   ];
+
+  const { cart, setCart } = useCart();
+
+  const handleAddToBag = (product) => {
+    setCart((prevCart) => {
+      const existingItem = prevCart.find((item) => item.id === product.id);
+      if (existingItem) {
+        // If product exists, increment quantity
+        return prevCart.map((item) =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+      // Otherwise, add new item with quantity 1
+      return [...prevCart, { ...product, quantity: 1 }];
+    });
+  };
 
   return (
     <div className="flex bg-gray-50 min-h-screen">
+      {/* Filter Sidebar */}
       <aside className="w-1/4 p-6 border-r bg-white">
         <h2 className="text-xl font-bold mb-6">Filter By</h2>
 
@@ -47,11 +67,12 @@ const Monitors = () => {
         </div>
       </aside>
 
-      <main className="w-3/4 p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Product Grid */}
+      <main className="w-full md:w-3/4 p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {products.map((product) => (
           <div
             key={product.id}
-            className="border rounded-lg p-4 bg-white shadow hover:shadow-md transition"
+            className="border rounded-lg p-4 bg-white shadow hover:shadow-md transition flex flex-col"
           >
             <img
               src={product.image}
@@ -59,7 +80,22 @@ const Monitors = () => {
               className="w-full h-56 object-contain rounded mb-4 bg-gray-100"
             />
             <h3 className="font-semibold text-lg mb-1">{product.name}</h3>
-            <p className="text-gray-700 text-sm">{product.price}</p>
+
+            <p className="text-red-600 font-semibold bg-red-100 px-3 py-1 inline-block rounded mb-3">
+              ${product.price}
+            </p>
+
+            <div className="mt-auto flex flex-col gap-2">
+              <button className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition w-full">
+                Buy Now
+              </button>
+              <button
+                onClick={() => handleAddToBag(product)}
+                className="w-full bg-gray-800 text-white py-2 rounded hover:bg-gray-900 transition"
+              >
+                Add to Bag
+              </button>
+            </div>
           </div>
         ))}
       </main>
