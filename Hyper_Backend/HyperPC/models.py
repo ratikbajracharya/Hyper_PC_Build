@@ -7,3 +7,13 @@ class Profile(models.Model):
 
     def str(self):
         return f"{self.user}, {self.phone}"
+    
+class BaseItem(models.Model):
+    item_name = models.CharField(max_length=255)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    item_photo = models.ImageField(upload_to="items/")
+    item_description = models.TextField()
+
+    def __str__(self):
+        return self.item_name
+    
