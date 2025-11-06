@@ -1,0 +1,72 @@
+{
+  "cpu": [
+    "Intel Core i9-14900K",
+    "Intel Core i7-14700K",
+    "Intel Core i5-14600K",
+    "AMD Ryzen 9 9950X",
+    "AMD Ryzen 9 9900X",
+    "AMD Ryzen 7 9700X",
+    "AMD Ryzen 5 9600X"
+  ],
+  "gpu": [
+    "NVIDIA GeForce RTX 5090",
+    "NVIDIA GeForce RTX 5080",
+    "NVIDIA GeForce RTX 5070 Ti",
+    "AMD Radeon RX 8900 XT",
+    "AMD Radeon RX 8800 XT",
+    "AMD Radeon RX 8700"
+  ],
+  "motherboard": [
+    "ASUS ROG Maximus Z790 Hero (Intel)",
+    "MSI MPG Z790 Carbon WiFi (Intel)",
+    "Gigabyte Z790 AORUS Elite AX (Intel)",
+    "ASUS ROG Crosshair X670E Hero (AMD)",
+    "MSI MEG X670E ACE (AMD)",
+    "Gigabyte X670 AORUS Master (AMD)"
+  ],
+  "ram": [
+    "Corsair Vengeance DDR5 32GB (2x16GB) 6000MHz",
+    "G.Skill Trident Z5 RGB DDR5 32GB 6400MHz",
+    "Kingston Fury Beast DDR5 32GB 5600MHz",
+    "TeamGroup T-Force Delta RGB DDR5 32GB 6000MHz"
+  ],
+  "storage": [
+    "Samsung 990 Pro 2TB NVMe SSD",
+    "WD Black SN850X 2TB NVMe SSD",
+    "Crucial T700 1TB NVMe SSD",
+    "Seagate FireCuda 530 2TB NVMe SSD",
+    "Kingston KC3000 1TB NVMe SSD"
+  ],
+  "psu": [
+    "Corsair RM1000x 1000W 80+ Gold",
+    "Seasonic Prime TX-1000 1000W 80+ Titanium",
+    "EVGA SuperNOVA 850 G7 850W 80+ Gold",
+    "Cooler Master V850 Gold V2 850W"
+  ],
+  "case": [
+    "NZXT H9 Flow (White)",
+    "Lian Li O11 Dynamic EVO",
+    "Corsair iCUE 5000X RGB",
+    "Fractal Design Meshify 2 Compact",
+    "Phanteks Eclipse G500A"
+  ],
+  "cooler": [
+    "NZXT Kraken Elite 360 AIO",
+    "Corsair iCUE H150i Elite Capellix XT",
+    "Noctua NH-D15 Chromax Black",
+    "be quiet! Dark Rock Pro 5",
+    "DeepCool Assassin IV"
+  ],
+  "monitor": [
+    "LG UltraGear 27GP950-B (4K 144Hz)",
+    "ASUS ROG Swift PG32UQX (4K Mini-LED)",
+    "Samsung Odyssey Neo G9 (49\" QD-OLED)",
+    "Alienware AW3423DW (34\" QD-OLED Ultrawide)"
+  ],
+  "accessories": [
+    "Logitech G Pro X Superlight 2 Mouse",
+    "Razer Huntsman V3 Pro Keyboard",
+    "SteelSeries Arctis Nova Pro Wireless Headset",
+    "Elgato Stream Deck MK.2"
+  ]
+}
