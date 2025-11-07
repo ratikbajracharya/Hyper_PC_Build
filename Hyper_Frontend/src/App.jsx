@@ -22,6 +22,7 @@ function App() {
     <Routes>
       {/* Public routes */}
       <Route path="/" element={<LoginPage />} />
+      <Route path="/login" element={<LoginPage />} />  {/* ✅ explicit login route */}
       <Route path="/reg" element={<RegisterPage />} />
 
       {/* Layout-wrapped routes */}

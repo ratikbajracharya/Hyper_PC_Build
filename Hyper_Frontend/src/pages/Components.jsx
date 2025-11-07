@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useCart } from "../CartContext";
-import FilterSidebar from "../components/FilterSidebar"; // Import reusable filter sidebar
+import FilterSidebar from "../components/FilterSidebar"; // Reusable filter sidebar
 
 const Components = () => {
   const [products, setProducts] = useState([]);
@@ -45,7 +45,7 @@ const Components = () => {
     fetchProducts();
   }, [selectedBrands, selectedCategories, priceRange, inStock]);
 
-  const handleAddToBag = (product) => {
+  const handleCartContext = (product) => {
     const price = parseFloat(product.price);
     addToCart({ ...product, price });
   };
@@ -62,8 +62,9 @@ const Components = () => {
         setPriceRange={setPriceRange}
         inStock={inStock}
         setInStock={setInStock}
-        categories={["CPU", "GPU", "RAM", "Motherboard", "Storage"]}
-        brands={["Intel", "AMD", "NVIDIA", "Corsair", "Samsung"]}
+        categories={["CPU", "GPU", "RAM", "Motherboard", "Storage"]} // Components categories
+        brands={["Intel", "AMD", "NVIDIA", "Corsair", "Samsung"]} // Components brands
+        title="Filter Components" // Page-specific title
       />
 
       {/* Product Grid */}
@@ -103,7 +104,7 @@ const Components = () => {
                     Buy Now
                   </button>
                   <button
-                    onClick={() => handleAddToBag(product)}
+                    onClick={() => handleCartContext(product)}
                     className="w-full bg-gray-800 text-white py-2 rounded hover:bg-gray-900 transition"
                   >
                     Add to Bag

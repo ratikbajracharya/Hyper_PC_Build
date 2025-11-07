@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useCart } from "../CartContext";
-import FilterSidebar from "../components/FilterSidebar"; // Import the reusable filter sidebar
+import FilterSidebar from "../components/FilterSidebar"; // Reusable filter sidebar
 
 const Accessories = () => {
   const [products, setProducts] = useState([]);
@@ -65,8 +65,9 @@ const Accessories = () => {
         setPriceRange={setPriceRange}
         inStock={inStock}
         setInStock={setInStock}
-        categories={["Gaming", "Office", "Compact"]}
-        brands={["HP", "Lenovo", "Custom"]}
+        categories={["Gaming", "Office", "Compact"]} // Accessory types
+        brands={["HP", "Lenovo", "Logitech", "Corsair", "Razer", "Custom"]} // Accessory brands
+        title="Filter Accessories" // Optional: page-specific title
       />
 
       {/* Product Grid */}
@@ -95,6 +96,7 @@ const Accessories = () => {
                   src={product.image}
                   alt={product.name}
                   className="w-full h-56 object-contain rounded mb-4 bg-gray-100"
+                  onError={(e) => (e.target.src = "/images/placeholder.jpg")}
                 />
                 <h3 className="font-semibold text-lg mb-1">{product.name}</h3>
                 <p className="text-red-600 font-semibold bg-red-100 px-3 py-1 inline-block rounded mb-3">

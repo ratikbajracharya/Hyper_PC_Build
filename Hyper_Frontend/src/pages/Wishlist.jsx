@@ -6,7 +6,7 @@ const Wishlist = () => {
   const { wishlistItems, removeFromWishlist, addToCart } = useCart(); // Make sure wishlistItems exists in CartContext
   const navigate = useNavigate();
 
-  const handleAddToBag = (item) => {
+  const handleCartContext = (item) => {
     addToCart(item);
     removeFromWishlist(item.id);
   };
@@ -37,7 +37,7 @@ const Wishlist = () => {
               <p className="text-red-600 font-semibold mb-4">${item.price}</p>
               <div className="mt-auto flex flex-col gap-2">
                 <button
-                  onClick={() => handleAddToBag(item)}
+                  onClick={() => handleCartContext(item)}
                   className="bg-red-600 text-white py-2 rounded hover:bg-red-700 transition"
                 >
                   Add to Bag

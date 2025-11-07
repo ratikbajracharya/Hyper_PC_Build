@@ -16,7 +16,7 @@ const HomePage = () => {
     { id: 202, name: "NVIDIA RTX Beast Build", release: "Coming April 2026", image: "/images/upcoming/upcoming2.jpg" },
   ];
 
-  const handleAddToBag = (product) => addToCart(product);
+  const handleCartContext = (product) => addToCart(product);
 
   return (
     <div className="bg-gray-100 min-h-screen flex flex-col">
@@ -71,7 +71,7 @@ const HomePage = () => {
                     Buy Now
                   </button>
                   <button
-                    onClick={() => handleAddToBag(product)}
+                    onClick={() => handleCartContext(product)}
                     className="bg-gray-800 text-white py-2 rounded hover:bg-gray-900 transition transform hover:-translate-y-0.5"
                   >
                     Add to Bag

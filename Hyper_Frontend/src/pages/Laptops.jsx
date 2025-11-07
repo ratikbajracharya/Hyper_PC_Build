@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useCart } from "../CartContext";
+import FilterSidebar from "../components/FilterSidebar"; // Reusable sidebar
 
 const Laptops = () => {
   const [products, setProducts] = useState([]);
@@ -8,108 +9,114 @@ const Laptops = () => {
   const [error, setError] = useState(null);
   const { addToCart } = useCart();
 
+  // Filters
+  const [selectedBrands, setSelectedBrands] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [priceRange, setPriceRange] = useState([500, 5000]);
+  const [inStock, setInStock] = useState(false);
+
+  // Fetch products
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.append("category", "laptop");
+      selectedBrands.forEach((brand) => params.append("brand", brand));
+      selectedCategories.forEach((cat) => params.append("subcategory", cat));
+      if (priceRange[0] > 0) params.append("min_price", priceRange[0]);
+      if (priceRange[1] < 5000) params.append("max_price", priceRange[1]);
+      if (inStock) params.append("in_stock", "true");
+
+      const response = await axios.get(
+        `http://127.0.0.1:8000/api/products/products/?${params.toString()}`
+      );
+
+      const data = Array.isArray(response.data)
+        ? response.data
+        : response.data.results || [];
+
+      setProducts(data);
+    } catch (err) {
+      console.error("Error fetching laptops:", err);
+      setError("Failed to load products.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const response = await axios.get(
-          "http://127.0.0.1:8000/api/products/products/?category=laptop"
-        );
-
-        // Check if response is paginated (DRF default) or array
-        const data = Array.isArray(response.data)
-          ? response.data
-          : response.data.results || [];
-
-        setProducts(data);
-      } catch (err) {
-        console.error("Error fetching products:", err);
-        setError("Failed to load products.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchProducts();
-  }, []);
+  }, [selectedBrands, selectedCategories, priceRange, inStock]);
 
-  const handleAddToBag = (product) => {
+  const handleCartContext = (product) => {
     const price = parseFloat(product.price);
     addToCart({ ...product, price });
   };
 
-  if (loading) return <p className="text-center mt-8">Loading products...</p>;
-  if (error) return <p className="text-center mt-8 text-red-600">{error}</p>;
-  if (!products.length) return <p className="text-center mt-8">No products found.</p>;
-
   return (
-    <div className="flex bg-gray-100 min-h-screen">
-      {/* Filter Sidebar */}
-      <aside className="w-1/4 p-6 border-r bg-white hidden md:block">
-        <h2 className="text-xl font-bold mb-6">Filter By</h2>
-
-        <div className="mb-6">
-          <h3 className="font-semibold mb-2">Category</h3>
-          <ul className="space-y-2 text-sm">
-            <li><label><input type="checkbox" className="mr-2" />Gaming</label></li>
-            <li><label><input type="checkbox" className="mr-2" />Office</label></li>
-            <li><label><input type="checkbox" className="mr-2" />Compact</label></li>
-          </ul>
-        </div>
-
-        <div className="mb-6">
-          <h3 className="font-semibold mb-2">Price</h3>
-          <input type="range" min="500" max="5000" className="w-full" />
-        </div>
-
-        <div className="mb-6">
-          <h3 className="font-semibold mb-2">Brand</h3>
-          <ul className="space-y-2 text-sm">
-            <li><label><input type="checkbox" className="mr-2" />HP</label></li>
-            <li><label><input type="checkbox" className="mr-2" />Lenovo</label></li>
-            <li><label><input type="checkbox" className="mr-2" />Dell</label></li>
-          </ul>
-        </div>
-
-        <div>
-          <h3 className="font-semibold mb-2">Availability</h3>
-          <ul className="space-y-2 text-sm">
-            <li><label><input type="checkbox" className="mr-2" />In Stock</label></li>
-            <li><label><input type="checkbox" className="mr-2" />Pre-order</label></li>
-          </ul>
-        </div>
-      </aside>
+    <div className="flex bg-gray-50 min-h-screen">
+      {/* Reusable Filter Sidebar */}
+      <FilterSidebar
+        selectedBrands={selectedBrands}
+        setSelectedBrands={setSelectedBrands}
+        selectedCategories={selectedCategories}
+        setSelectedCategories={setSelectedCategories}
+        priceRange={priceRange}
+        setPriceRange={setPriceRange}
+        inStock={inStock}
+        setInStock={setInStock}
+        categories={["Gaming", "Office", "Compact"]} // Laptop subcategories
+        brands={["HP", "Lenovo", "Dell", "Asus", "Acer"]} // Laptop brands
+        title="Filter Laptops"
+      />
 
       {/* Product Grid */}
-      <main className="w-full md:w-3/4 p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {products.map((product) => (
-          <div
-            key={product.id}
-            className="border rounded-lg p-4 bg-white shadow hover:shadow-md transition flex flex-col"
-          >
+      <main className="w-full md:w-3/4 p-6">
+        {loading ? (
+          <p className="text-center mt-8">Loading products...</p>
+        ) : error ? (
+          <p className="text-center mt-8 text-red-600">{error}</p>
+        ) : products.length === 0 ? (
+          <div className="flex flex-col items-center mt-10">
             <img
-              src={product.image}
-              alt={product.name}
-              className="w-full h-56 object-contain rounded mb-4 bg-gray-100"
+              src="/no-products.svg"
+              alt="No laptops found"
+              className="w-48 h-48 mb-4"
             />
-            <h3 className="font-semibold text-lg mb-1">{product.name}</h3>
-
-            <p className="text-red-600 font-semibold bg-red-100 px-3 py-1 inline-block rounded mb-3">
-              ${product.price}
-            </p>
-
-            <div className="mt-auto flex flex-col gap-2">
-              <button className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition w-full">
-                Buy Now
-              </button>
-              <button
-                onClick={() => handleAddToBag(product)}
-                className="w-full bg-gray-800 text-white py-2 rounded hover:bg-gray-900 transition"
-              >
-                Add to Bag
-              </button>
-            </div>
+            <p className="text-gray-300 text-lg">No laptops found.</p>
           </div>
-        ))}
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {products.map((product) => (
+              <div
+                key={product.id}
+                className="border rounded-lg p-4 bg-white shadow hover:shadow-md transition flex flex-col"
+              >
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  className="w-full h-56 object-contain rounded mb-4 bg-gray-100"
+                  onError={(e) => (e.target.src = "/images/placeholder.jpg")}
+                />
+                <h3 className="font-semibold text-lg mb-1">{product.name}</h3>
+                <p className="text-red-600 font-semibold bg-red-100 px-3 py-1 inline-block rounded mb-3">
+                  ${product.price}
+                </p>
+                <div className="mt-auto flex flex-col gap-2">
+                  <button className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition w-full">
+                    Buy Now
+                  </button>
+                  <button
+                    onClick={() => handleCartContext(product)}
+                    className="w-full bg-gray-800 text-white py-2 rounded hover:bg-gray-900 transition"
+                  >
+                    Add to Bag
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );
