@@ -13,8 +13,9 @@ import ComponentsPage from "./pages/Components";
 import Laptops from "./pages/Laptops";
 import Accessories from "./pages/Accessories";
 import BuildMyPC from "./pages/BuildMyPC";
-import Profile from "./pages/Profile";
+import BuildDetails from "./pages/BuildDetails";
 import SavedBuilds from "./pages/SavedBuilds";
+import Profile from "./pages/Profile";
 import Bag from "./pages/Bag";
 import Checkout from "./pages/Checkout";
 
@@ -27,29 +28,28 @@ function App() {
     <BuildProvider>
       <Routes>
 
-        {/* ===== PUBLIC ROUTES ===== */}
+        {/* ===== PUBLIC AUTH ROUTES ===== */}
         <Route path="/" element={<LoginPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/reg" element={<RegisterPage />} />
 
-        {/* ===== PROTECTED ROUTES (With Navbar Layout) ===== */}
+        {/* ===== LOGGED-IN ROUTES (WITH NAVBAR) ===== */}
         <Route element={<Layout />}>
+
+          {/* Main navigation pages */}
           <Route path="/home" element={<HomePage />} />
           <Route path="/prebuilt-pc" element={<PrebuiltPC />} />
           <Route path="/monitors" element={<Monitors />} />
           <Route path="/components" element={<ComponentsPage />} />
           <Route path="/laptops" element={<Laptops />} />
           <Route path="/accessories" element={<Accessories />} />
+
+          {/* Build PC */}
           <Route path="/build-my-pc" element={<BuildMyPC />} />
-          <Route path="/profile" element={<Profile />} />
 
-          {/* SAVED BUILDS */}
+          {/* Saved Builds */}
           <Route path="/saved-builds" element={<SavedBuilds />} />
-
-          {/* Auto-redirect for mistyped URL (fix for your error) */}
-          <Route path="/Saved Builds" element={<Navigate to="/saved-builds" />} />
-          <Route path="/SavedBuilds" element={<Navigate to="/saved-builds" />} />
-          <Route path="/Saved_Builds" element={<Navigate to="/saved-builds" />} />
+          <Route path="/saved-builds/:id" element={<BuildDetails />} />
 
           {/* Cart + Checkout */}
           <Route path="/bag" element={<Bag />} />
@@ -59,7 +59,11 @@ function App() {
           <Route path="/search" element={<SearchResults />} />
         </Route>
 
-        {/* Catch-all: Redirect unknown routes to home */}
+        {/* Redirect mis-typed URLs */}
+        <Route path="/SavedBuilds" element={<Navigate to="/saved-builds" />} />
+        <Route path="/Saved Builds" element={<Navigate to="/saved-builds" />} />
+
+        {/* ===== CATCH-ALL ===== */}
         <Route path="*" element={<Navigate to="/home" replace />} />
 
       </Routes>
