@@ -25,7 +25,9 @@ INSTALLED_APPS = [
     'rest_framework',
 
     # Your app
-    'HyperPC',
+    'products',
+    'django_filters',
+    'users',     # <-- for registration 
 ]
 
 MIDDLEWARE = [
@@ -105,3 +107,11 @@ CORS_ALLOW_ALL_ORIGINS = True  # Use only in development
 
 # Optional: allow cookies and credentials (if using authentication)
 CORS_ALLOW_CREDENTIALS = True
+
+# Media files (for product images, profile images, etc.)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
+}

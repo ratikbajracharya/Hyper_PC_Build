@@ -1,0 +1,132 @@
+import axios from "axios";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+const LoginPage = () => {
+  const [userInput, setUserInput] = useState("");
+  const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+
+    if (userInput.trim() === "" || password.trim() === "") {
+      alert("Please fill in both fields");
+      return;
+    }
+
+    try {
+      const response = await axios.post('http://127.0.0.1:8000/api/users/login/', {
+        userInput,
+        password,
+      });
+
+      console.log("Login response:", response.data);
+
+      if (response.status === 200) {
+        alert("Login successful! Redirecting...");
+        navigate("/home"); // Navigate to home page
+      }
+    } catch (error) {
+      console.error("Login failed:", error.response?.data || error.message);
+      alert("Login failed. Please check your credentials.");
+    }
+  };
+
+  return (
+    <div style={styles.container}>
+      <div style={styles.card}>
+        <h2 style={styles.title}>Welcome Back</h2>
+        <p style={styles.subtitle}>Login with your username or phone number</p>
+        <form onSubmit={handleLogin} style={styles.form}>
+          <input
+            type="text"
+            placeholder="Username or Phone Number"
+            value={userInput}
+            onChange={(e) => setUserInput(e.target.value)}
+            style={styles.input}
+            required
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            style={styles.input}
+            required
+          />
+          <button type="submit" style={styles.button}>Login</button>
+
+          <p style={styles.redirectText}>
+            Don't have an Account yet? Register{" "}
+            <span style={styles.link} onClick={() => navigate("/reg")}>here</span>
+          </p>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// Styles remain unchanged
+const styles = {
+  container: {
+    height: "100vh",
+    width: "100vw",
+    background: "linear-gradient(135deg, #000, rgb(207, 222, 243))",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    fontFamily: "Arial, sans-serif",
+  },
+  card: {
+    backgroundColor: "#fff",
+    padding: "2rem",
+    borderRadius: "12px",
+    boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+    maxWidth: "400px",
+    width: "100%",
+    textAlign: "center",
+  },
+  title: {
+    marginBottom: "0.5rem",
+    color: "#333",
+  },
+  subtitle: {
+    fontSize: "0.9rem",
+    color: "#666",
+    marginBottom: "1.5rem",
+  },
+  form: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "1rem",
+  },
+  input: {
+    padding: "0.75rem",
+    borderRadius: "8px",
+    border: "1px solid #ccc",
+    fontSize: "1rem",
+  },
+  button: {
+    padding: "0.75rem",
+    borderRadius: "8px",
+    border: "none",
+    backgroundColor: "rgb(234 20 77)",
+    color: "#fff",
+    fontSize: "1rem",
+    cursor: "pointer",
+    transition: "background-color 0.3s",
+  },
+  link: {
+    color: "#3b82f6",
+    cursor: "pointer",
+    textDecoration: "underline",
+  },
+  redirectText: {
+    marginTop: "1rem",
+    fontSize: "0.85rem",
+    color: "#666",
+  },
+};
+
+export default LoginPage;
