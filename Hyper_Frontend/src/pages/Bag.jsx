@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useCart } from "../CartContext";
 import { useNavigate } from "react-router-dom";
 
@@ -6,10 +6,18 @@ const Bag = () => {
   const { cartItems, removeFromCart, updateQty } = useCart();
   const navigate = useNavigate();
 
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + parseFloat(item.price) * item.quantity,
-    0
-  );
+  const [expandedIds, setExpandedIds] = useState([]);
+
+  const toggleExpand = (id) => {
+    setExpandedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
+  const subtotal = cartItems.reduce((sum, item) => {
+    const itemPrice = item.type === "pc-build" ? 0 : parseFloat(item.price);
+    return sum + itemPrice * item.quantity;
+  }, 0);
   const shipping = subtotal > 0 ? 50 : 0;
   const total = subtotal + shipping;
 
@@ -21,46 +29,74 @@ const Bag = () => {
         <p className="text-center text-gray-600 text-lg">Your bag is empty.</p>
       ) : (
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Items list */}
-          <div className="flex-1 bg-white p-6 rounded-lg shadow">
-            {cartItems.map(({ id, name, image, price, quantity }) => (
-              <div
-                key={id}
-                className="flex items-center border-b border-gray-200 py-4 last:border-b-0"
-              >
-                <img
-                  src={image}
-                  alt={name}
-                  className="w-24 h-24 object-contain rounded"
-                />
-                <div className="flex flex-col flex-1 ml-4">
-                  <h2 className="text-lg font-semibold">{name}</h2>
-                  <p className="text-red-600 font-semibold mt-1">${price}</p>
-                  <div className="mt-2 flex items-center space-x-3">
-                    <label htmlFor={`qty-${id}`} className="text-sm font-medium">
-                      Qty:
-                    </label>
-                    <input
-                      type="number"
-                      id={`qty-${id}`}
-                      min="1"
-                      value={quantity}
-                      onChange={(e) => updateQty(id, Number(e.target.value))}
-                      className="w-16 border rounded px-2 py-1 text-center"
-                    />
-                    <button
-                      onClick={() => removeFromCart(id)}
-                      className="ml-auto text-sm text-gray-500 hover:text-red-600"
-                    >
-                      Remove
-                    </button>
+          {/* Items List */}
+          <div className="flex-1 bg-white p-6 rounded-lg shadow space-y-4">
+            {cartItems.map((item) => {
+              const isBuild = item.type === "pc-build";
+              return (
+                <div
+                  key={item.id}
+                  className="border-b border-gray-200 pb-4 last:border-b-0"
+                >
+                  <div className="flex items-center">
+                    {!isBuild && item.image && (
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-24 h-24 object-contain rounded"
+                      />
+                    )}
+                    <div className="flex-1 ml-4">
+                      <h2 className="text-lg font-semibold">{item.name}</h2>
+                      {!isBuild && (
+                        <p className="text-red-600 font-semibold mt-1">${item.price}</p>
+                      )}
+                      <div className="mt-2 flex items-center space-x-3">
+                        <label className="text-sm font-medium">Qty:</label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={item.quantity}
+                          onChange={(e) => updateQty(item.id, Number(e.target.value))}
+                          className="w-16 border rounded px-2 py-1 text-center"
+                        />
+                        <button
+                          onClick={() => removeFromCart(item.id)}
+                          className="ml-auto text-sm text-gray-500 hover:text-red-600"
+                        >
+                          Remove
+                        </button>
+                        {isBuild && (
+                          <button
+                            onClick={() => toggleExpand(item.id)}
+                            className="text-sm text-blue-600 hover:underline"
+                          >
+                            {expandedIds.includes(item.id) ? "Hide Parts" : "View Parts"}
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Expandable PC Build Parts */}
+                      {isBuild && expandedIds.includes(item.id) && (
+                        <div className="mt-2 p-3 bg-gray-50 rounded text-sm space-y-1 border">
+                          {Object.entries(item.parts).map(([category, part]) => (
+                            <div key={category} className="flex justify-between">
+                              <span className="capitalize">{category}:</span>
+                              <span>{part}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <p className="w-20 text-right font-semibold">
+                      {isBuild
+                        ? `$${(0 * item.quantity).toFixed(2)}`
+                        : `$${(parseFloat(item.price) * item.quantity).toFixed(2)}`}
+                    </p>
                   </div>
                 </div>
-                <p className="w-20 text-right font-semibold">
-                  ${(parseFloat(price) * quantity).toFixed(2)}
-                </p>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Summary */}
@@ -86,7 +122,6 @@ const Bag = () => {
             >
               Proceed to Checkout
             </button>
-
 
             <button
               onClick={() => navigate("/home")}

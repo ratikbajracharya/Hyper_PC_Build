@@ -50,6 +50,7 @@ function Navbar() {
     }
   };
 
+  // Hide suggestions on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -125,15 +126,16 @@ function Navbar() {
       {/* Right-side Links */}
       <div className="flex gap-4 flex-shrink-0 mt-2 lg:mt-0">
         <NavLink
-          to="/wishlist"
+          to="/saved-builds"
           className={({ isActive }) =>
             isActive
               ? "bg-gray-700 px-3 py-1 rounded"
               : "hover:bg-gray-800 px-3 py-1 rounded"
           }
         >
-          Wishlist
+          Saved Builds
         </NavLink>
+
         <NavLink
           to="/bag"
           className={({ isActive }) =>
@@ -144,6 +146,7 @@ function Navbar() {
         >
           Bag
         </NavLink>
+
         <NavLink
           to="/profile"
           className={({ isActive }) =>

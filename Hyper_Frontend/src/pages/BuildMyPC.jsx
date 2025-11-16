@@ -1,295 +1,381 @@
+// src/pages/BuildMyPC.jsx
 import React, { useEffect, useState } from "react";
 import { CheckCircle } from "lucide-react";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { useBuild } from "../components/BuildContext"; // useBuild hook from your BuildContext
+import { GoogleGenerativeAI } from "@google/generative-ai"; // ensure package installed
 
 const BuildMyPC = () => {
+  // Build context
+  const { selectedParts: ctxSelectedParts, selectPart, saveBuild } = useBuild();
+
+  // Local UI state (we'll mirror context selection locally so UI feels snappy)
   const [parts, setParts] = useState(null);
-  const [selectedParts, setSelectedParts] = useState({});
+  const [localSelected, setLocalSelected] = useState(ctxSelectedParts || {});
+  const [compatibility, setCompatibility] = useState([]);
+  const [showCompatibility, setShowCompatibility] = useState(false);
+  const [highlightSuggestions, setHighlightSuggestions] = useState({});
+  const [saveMessage, setSaveMessage] = useState("");
+
+  // Chat state
   const [chatOpen, setChatOpen] = useState(false);
-
-  // NEW: chat states
   const [messages, setMessages] = useState([
-    { sender: "bot", text: "Hi! How can we help you build your PC today?" },
+    { sender: "bot", text: "Hi — I'm your build assistant. Ask me about compatibility, bottlenecks, or alternatives." },
   ]);
-  const [input, setInput] = useState("");
+  const [chatInput, setChatInput] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
 
-  // Load pcParts.json
+  // Load parts file
   useEffect(() => {
     fetch("/pcParts.json")
-      .then((res) => res.json())
+      .then((r) => r.json())
       .then((data) => setParts(data))
-      .catch((err) => console.error("Error loading parts:", err));
+      .catch((err) => {
+        console.error("Error loading pcParts.json:", err);
+        setParts(null);
+      });
   }, []);
 
-  // Handle part selection
+  // Keep local selection in sync with context selection if context changes elsewhere
+  useEffect(() => {
+    setLocalSelected(ctxSelectedParts || {});
+  }, [ctxSelectedParts]);
+
+  // When user clicks a part tile we update local selection and context
   const handleSelect = (category, item) => {
-    setSelectedParts((prev) => ({
-      ...prev,
-      [category]: item,
-    }));
+    // update local UI
+    setLocalSelected((prev) => {
+      const next = { ...prev, [category]: item };
+      return next;
+    });
+    // update global context
+    selectPart(category, item);
   };
 
-  // --- Gemini Setup ---
-  // NOTE: keep these inside the component so they can access env var / re-render safely.
-  const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
-
-  // System prompt
-  const systemPrompt = `
-You are a PC recommender bot.
-The user will tell you their budget, purpose, and requirements.
-You must reply ONLY with a JSON array of 5 recommended PCs.
-Do not add any explanation or text outside the JSON array.
-Each item must include:
-  - Brand and model name
-  - Approximate price (USD)
-  - Key specs (CPU, RAM, GPU, Storage)
-
-Example output:
-[
-  {"name": "Dell G15 Gaming Laptop", "price": "$799", "specs": "Ryzen 7, 16GB RAM, RTX 3050, 512GB SSD"},
-  {"name": "HP Omen 16", "price": "$950", "specs": "Intel i7, 16GB RAM, RTX 3060, 1TB SSD"}
-]
-`;
-
-  // Handle sending chat (UPDATED: shows parsed JSON as a table)
-  const handleSend = async () => {
-    if (!input.trim()) return;
-
-    const userMsg = { sender: "user", text: input };
-    setMessages((prev) => [...prev, userMsg]);
-
-    try {
-      // Get raw response from Gemini
-      const result = await model.generateContent(systemPrompt + "\n\nUser request: " + input);
-
-      // Extract raw text from result defensively
-      let botReplyRaw = "";
-      if (result && typeof result.response?.text === "function") {
-        botReplyRaw = await result.response.text();
-      } else if (typeof result === "string") {
-        botReplyRaw = result;
-      } else if (typeof result?.response === "string") {
-        botReplyRaw = result.response;
-      } else if (result && typeof result === "object") {
-        // try common fields (candidates, output, content)
-        if (Array.isArray(result.candidates) && result.candidates[0]?.content) {
-          botReplyRaw = result.candidates[0].content;
-        } else if (result.output?.[0]?.content) {
-          // content could be an object/array/string
-          const c = result.output[0].content;
-          botReplyRaw = typeof c === "string" ? c : JSON.stringify(c);
-        } else {
-          botReplyRaw = JSON.stringify(result);
-        }
-      } else {
-        botReplyRaw = String(result);
-      }
-
-      // Try to extract JSON array (handles if it's inside backticks / code block)
-      const jsonMatch = botReplyRaw.match(/\[.*\]/s); // s = dotall
-      const jsonText = jsonMatch ? jsonMatch[0] : botReplyRaw;
-
-      // Attempt to parse JSON
-      try {
-        const jsonList = JSON.parse(jsonText);
-
-        if (Array.isArray(jsonList) && jsonList.length > 0) {
-          // Add a short header text then the table message
-          setMessages((prev) => [
-            ...prev,
-            { sender: "bot", text: `Here are ${jsonList.length} options I found for you:` },
-            { sender: "bot", table: jsonList },
-          ]);
-        } else {
-          // Parsed but not an array — pretty-print it as text
-          setMessages((prev) => [
-            ...prev,
-            {
-              sender: "bot",
-              text:
-                "I got a structured response, but it's not a list. Here it is:\n" +
-                JSON.stringify(jsonList, null, 2),
-            },
-          ]);
-        }
-      } catch (parseErr) {
-        // Couldn't parse JSON -> fallback to raw text (clean up code block markers)
-        console.warn("Failed to parse JSON from bot response:", parseErr);
-        // Clean triple backticks or ```json markers if present
-        let cleaned = botReplyRaw.replace(/```(?:json)?/g, "").trim();
-        setMessages((prev) => [...prev, { sender: "bot", text: cleaned }]);
-      }
-    } catch (err) {
-      console.error("Gemini API error:", err);
-      setMessages((prev) => [
-        ...prev,
-        { sender: "bot", text: "Sorry — I couldn't fetch a response right now. Please try again." },
-      ]);
+  // Compatibility logic & suggestions (lightweight rules + suggestion generation)
+  useEffect(() => {
+    // if no cpu or motherboard selected, no evaluation
+    if (!localSelected.cpu || !localSelected.motherboard) {
+      setCompatibility([]);
+      setHighlightSuggestions({});
+      return;
     }
 
-    setInput("");
+    const issues = [];
+    const suggestions = {};
+
+    // CPU / Motherboard brand check (Intel vs AMD)
+    if (
+      (localSelected.cpu.includes("Intel") && !localSelected.motherboard.includes("Intel")) ||
+      (localSelected.cpu.includes("AMD") && !localSelected.motherboard.includes("AMD"))
+    ) {
+      const brand = localSelected.cpu.includes("Intel") ? "Intel" : "AMD";
+      issues.push({
+        issue: "CPU and motherboard socket/brand mismatch (Intel vs AMD).",
+        detail: `Selected CPU appears to be ${brand}-family but motherboard is not ${brand}.`,
+      });
+      suggestions.motherboard = parts?.motherboard?.filter((m) => m.includes(brand)) || [];
+    }
+
+    // RAM check (DDR5 vs mobo chipset)
+    if (
+      localSelected.ram &&
+      localSelected.motherboard &&
+      localSelected.ram.includes("DDR5") &&
+      !/Z790|X670|B650|Z890|X890/i.test(localSelected.motherboard)
+    ) {
+      issues.push({
+        issue: "RAM likely incompatible: DDR5 selected but motherboard may not support DDR5.",
+        detail: `Selected RAM is DDR5 but motherboard doesn't contain known DDR5-ready chipset markers.`,
+      });
+      suggestions.motherboard = [
+        ...(suggestions.motherboard || []),
+        ...(parts?.motherboard?.filter((m) => /Z790|X670|B650|Z890|X890/i.test(m)) || []),
+      ];
+    }
+
+    // Rough PSU check (very approximate)
+    if (localSelected.psu && localSelected.gpu && localSelected.cpu) {
+      const gpuHigh = /5090|5080|5070|RTX 40|RX 8/ig.test(localSelected.gpu);
+      const cpuHigh = /i9|9950X|Ryzen 9|9900X/i.test(localSelected.cpu);
+      if (gpuHigh && cpuHigh && /850W/i.test(localSelected.psu)) {
+        issues.push({
+          issue: "PSU may be underpowered for this CPU+GPU combination.",
+          detail: `Both CPU and GPU are high-end; consider a 1000W+ unit.`,
+        });
+        suggestions.psu = parts?.psu?.filter((p) => {
+          // try to parse a number > 900 from string
+          const n = (p.match(/\d+/) || [])[0];
+          return n ? parseInt(n) >= 1000 : false;
+        }) || [];
+      }
+    }
+
+    if (issues.length === 0) {
+      setCompatibility([{ issue: "All selected parts look compatible ✅", detail: "" }]);
+      setHighlightSuggestions({});
+    } else {
+      setCompatibility(issues);
+      setHighlightSuggestions(suggestions);
+    }
+  }, [localSelected, parts]);
+
+  // Save build action (uses build context saveBuild)
+  const handleSaveBuild = () => {
+    if (!saveBuild) {
+      setSaveMessage("Save function not available. Make sure BuildProvider is mounted.");
+      setTimeout(() => setSaveMessage(""), 3000);
+      return;
+    }
+    const id = saveBuild(); // your BuildContext.saveBuild uses current context selectedParts
+    if (id) {
+      setSaveMessage("Build saved ✅");
+    } else {
+      setSaveMessage("Please select at least CPU and Motherboard before saving.");
+    }
+    setTimeout(() => setSaveMessage(""), 3000);
   };
 
-  // Helper to render a table message
-  const TableMessage = ({ rows }) => {
-    return (
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-sm text-left border-collapse">
-          <thead>
-            <tr>
-              <th className="px-3 py-2 border-b font-medium">#</th>
-              <th className="px-3 py-2 border-b font-medium">Name</th>
-              <th className="px-3 py-2 border-b font-medium">Price</th>
-              <th className="px-3 py-2 border-b font-medium">Specs</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((item, idx) => {
-              // item could be a string or object; handle defensively
-              const name = item?.name ?? (typeof item === "string" ? item : "Unknown");
-              const price = item?.price ?? "N/A";
-              const specs = item?.specs ?? "N/A";
-              return (
-                <tr key={idx} className={idx % 2 === 0 ? "" : ""}>
-                  <td className="px-3 py-2 align-top border-b w-8">{idx + 1}</td>
-                  <td className="px-3 py-2 align-top border-b">{name}</td>
-                  <td className="px-3 py-2 align-top border-b">{price}</td>
-                  <td className="px-3 py-2 align-top border-b whitespace-pre-wrap">{specs}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    );
+  // --- Gemini chat integration ---
+  // Defensive initialization (so dev doesn't crash if env missing)
+  let genModel = null;
+  try {
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    if (apiKey) {
+      const genAI = new GoogleGenerativeAI(apiKey);
+      genModel = genAI.getGenerativeModel({ model: "gemini-2.5-pro" }); // adjust model name if needed
+    }
+  } catch (e) {
+    // don't fail; genModel remains null
+    console.warn("Gemini client init failed:", e);
+  }
+
+  const sendChat = async () => {
+    const question = chatInput.trim();
+    if (!question) return;
+
+    const userMsg = { sender: "user", text: question };
+    setMessages((m) => [...m, userMsg]);
+    setChatInput("");
+    setChatLoading(true);
+
+    // Build prompt that includes selected parts so Gemini can reason about compatibility
+    const buildSnapshot = JSON.stringify(localSelected, null, 2);
+    const prompt = [
+      "You are an expert PC builder and compatibility checker.",
+      "The user has the following current selection:",
+      buildSnapshot,
+      "Answer the user's question precisely, point out any compatibility issues, explain why, and suggest concrete alternative parts (choose from the available part lists when possible).",
+      `User question: ${question}`,
+      "Respond clearly; if you provide a list of suggestions, label them and explain reasons. Keep it concise."
+    ].join("\n\n");
+
+    try {
+      if (!genModel) throw new Error("Gemini model not initialized (check VITE_GEMINI_API_KEY and package).");
+
+      const result = await genModel.generateContent(prompt);
+
+      // Extract text defensively (Gemini SDK responses vary)
+      let botText = "";
+      if (result && typeof result.response?.text === "function") {
+        botText = await result.response.text();
+      } else if (typeof result === "string") {
+        botText = result;
+      } else if (typeof result?.response === "string") {
+        botText = result.response;
+      } else if (result && result.output?.[0]?.content) {
+        const c = result.output[0].content;
+        botText = typeof c === "string" ? c : JSON.stringify(c);
+      } else if (Array.isArray(result?.candidates) && result.candidates[0]?.content) {
+        botText = result.candidates[0].content;
+      } else {
+        botText = JSON.stringify(result);
+      }
+
+      setMessages((m) => [...m, { sender: "bot", text: botText }]);
+    } catch (err) {
+      console.error("Chat error:", err);
+      setMessages((m) => [...m, { sender: "bot", text: "Sorry — couldn't reach the assistant. Check API key & network." }]);
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  // UI helpers for tile classes (bolder suggestion highlight)
+  const tileClass = (isSelected, isSuggested) => {
+    // Selected: red solid, Suggested: lime border + soft glow, default: white
+    if (isSelected) return "bg-red-600 text-white border-red-700";
+    if (isSuggested) return "bg-gradient-to-br from-green-50 to-green-100 border-green-500 shadow-[0_6px_20px_rgba(34,197,94,0.12)]";
+    return "bg-white hover:border-red-500";
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen px-6 py-12 relative">
-      <h1 className="text-4xl font-bold mb-10 text-center text-gray-800">🖥️ Build My PC</h1>
+    <div className="bg-gray-100 min-h-screen px-6 py-12">
+      <h1 className="text-4xl font-bold mb-8 text-center text-gray-800">🖥️ Build My PC</h1>
 
-      {/* Your existing PC parts selection code unchanged... */}
+      {saveMessage && (
+        <div className="mx-auto max-w-3xl text-center mb-4 text-green-700 font-semibold">
+          {saveMessage}
+        </div>
+      )}
+
       {!parts ? (
-        <p className="text-center text-lg text-gray-600">Loading available parts...</p>
+        <p className="text-center">Loading available parts...</p>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          {/* Part Selection */}
-          <div className="lg:col-span-2 space-y-10">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left / center: selection */}
+          <div className="lg:col-span-2 space-y-8">
             {Object.keys(parts).map((category) => (
-              <div key={category}>
-                <h2 className="text-2xl font-semibold mb-4 capitalize text-gray-800">
-                  {category}
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {parts[category].map((item, index) => {
-                    const isSelected = selectedParts[category] === item;
+              <section key={category}>
+                <h2 className="text-2xl font-semibold mb-4 capitalize">{category}</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {parts[category].map((item, i) => {
+                    const isSelected = localSelected[category] === item;
+                    const isSuggested = (highlightSuggestions[category] || []).includes(item);
                     return (
                       <div
-                        key={index}
+                        key={i}
                         onClick={() => handleSelect(category, item)}
-                        className={`cursor-pointer p-5 rounded-xl border shadow-sm transition relative ${isSelected
-                            ? "bg-red-600 text-white border-red-700"
-                            : "bg-white hover:shadow-lg hover:border-red-500"
-                          }`}
+                        className={`cursor-pointer p-4 rounded-lg border shadow-sm transition ${tileClass(isSelected, isSuggested)}`}
                       >
-                        <p className="font-medium">{item}</p>
-                        {isSelected && (
-                          <CheckCircle className="absolute top-3 right-3 text-green-400" size={22} />
+                        <div className="flex items-start">
+                          <div className="flex-1">
+                            <p className="font-medium">{item}</p>
+                          </div>
+                          {isSelected && <CheckCircle className="ml-3 text-white" size={18} />}
+                        </div>
+                        {isSuggested && !isSelected && (
+                          <div className="mt-2 text-xs text-green-700 font-semibold">Suggested</div>
                         )}
                       </div>
                     );
                   })}
                 </div>
-              </div>
+              </section>
             ))}
           </div>
 
-          {/* Build Summary */}
-          <div className="lg:sticky lg:top-10 h-fit bg-white shadow-lg rounded-xl p-6 border">
-            <h2 className="text-2xl font-bold mb-4 text-gray-800">⚡ Your Build</h2>
-            <div className="space-y-3">
+          {/* Right column: sticky summary */}
+          <aside className="lg:sticky lg:top-6 p-6 bg-white rounded-xl shadow border h-fit">
+            <h3 className="text-2xl font-bold mb-3">⚡ Your Build</h3>
+
+            <div className="space-y-2 mb-4">
               {Object.keys(parts).map((category) => (
-                <div key={category} className="flex justify-between items-center">
-                  <span className="capitalize font-medium">{category}:</span>
-                  <span className="text-gray-700">{selectedParts[category] || "Not Selected"}</span>
+                <div key={category} className="flex justify-between text-sm">
+                  <span className="capitalize text-gray-700">{category}:</span>
+                  <span className="font-medium text-gray-900">
+                    {localSelected[category] || <span className="text-gray-400">Not Selected</span>}
+                  </span>
                 </div>
               ))}
             </div>
 
-            <div className="mt-6 p-4 rounded-lg bg-gray-50 border text-sm">
-              <h3 className="font-semibold mb-2">🧩 Compatibility Check</h3>
-              <p className="text-gray-600">
-                We’ll analyze your build here for bottlenecks and compatibility once you select parts.
-              </p>
-            </div>
+            {/* Compatibility area */}
+            <div className="bg-gray-50 border p-4 rounded text-sm">
+              <h4 className="font-semibold mb-2">🧩 Compatibility</h4>
 
-            <button className="mt-6 w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-semibold transition">
-              Add Build to Cart 🛒
-            </button>
-          </div>
-        </div>
-      )}
+              <button
+                onClick={() => setShowCompatibility((s) => !s)}
+                className="mb-3 w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-semibold"
+              >
+                {showCompatibility ? "Hide Details" : "Check Compatibility"}
+              </button>
 
-      {/* Floating Chat Icon */}
-      {!chatOpen && (
-        <button
-          onClick={() => setChatOpen(true)}
-          className="fixed bottom-6 right-6 bg-red-600 hover:bg-red-700 text-white p-4 rounded-full shadow-lg z-50"
-        >
-          💬
-        </button>
-      )}
-
-      {/* Chatbox */}
-      {chatOpen && (
-        <div className="fixed bottom-20 right-6 w-196 max-w-xs sm:w-80 bg-white shadow-lg rounded-lg border flex flex-col overflow-hidden z-50">
-          <div className="bg-red-600 text-white px-4 py-2 flex justify-between items-center">
-            <h3 className="font-semibold">Chat with us</h3>
-            <button onClick={() => setChatOpen(false)}>✖</button>
-          </div>
-
-          {/* Messages */}
-          <div className="p-4 flex-1 overflow-y-auto max-h-64 text-gray-700 space-y-3">
-            {messages.map((msg, i) => {
-              const isUser = msg.sender === "user";
-              return (
-                <div
-                  key={i}
-                  className={`text-sm px-3 py-2 rounded-lg max-w-full ${isUser ? "bg-red-100 self-end ml-auto" : "bg-gray-100 self-start"
-                    }`}
-                >
-                  {/* If this message includes a table, render it */}
-                  {msg.table ? (
-                    <div>
-                      {/* optional header inside the bubble */}
-                      <div className="mb-2 text-xs text-gray-600">Recommended options:</div>
-                      <TableMessage rows={msg.table} />
+              {showCompatibility && (
+                <div className="space-y-2">
+                  {compatibility.map((c, i) => (
+                    <div key={i} className="text-sm">
+                      <div className="font-medium">{c.issue}</div>
+                      {c.detail && <div className="text-gray-600 mt-1">{c.detail}</div>}
+                      {c.suggestions && c.suggestions.length > 0 && (
+                        <div className="mt-2">
+                          <div className="text-xs font-semibold text-gray-700">Suggested alternatives:</div>
+                          <ul className="list-disc pl-5 text-gray-600 mt-1">
+                            {c.suggestions.map((s, idx) => (
+                              <li key={idx} className="text-sm">
+                                {s}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    // plain text message
-                    <div style={{ whiteSpace: "pre-wrap" }}>{msg.text}</div>
-                  )}
+                  ))}
                 </div>
-              );
-            })}
-          </div>
+              )}
 
-          {/* Input */}
-          <div className="p-3 border-t flex">
-            <input
-              type="text"
-              placeholder="Type a message..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              className="flex-1 border rounded-l px-3 py-2 text-sm focus:outline-none"
-            />
-            <button onClick={handleSend} className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-r text-sm">
-              Send
-            </button>
-          </div>
+              {/* Save button below compatibility as requested */}
+              <div className="mt-4">
+                <button
+                  onClick={handleSaveBuild}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded font-semibold"
+                >
+                  💾 Save Build
+                </button>
+                <div className="mt-2 text-yellow-700 text-sm">Contact store for quotation.</div>
+              </div>
+            </div>
+          </aside>
         </div>
       )}
+
+      {/* Chat floating button & window */}
+      <div>
+        {!chatOpen ? (
+          <button
+            onClick={() => setChatOpen(true)}
+            className="fixed bottom-6 right-6 bg-red-600 hover:bg-red-700 text-white p-4 rounded-full shadow-lg z-50"
+            aria-label="Open build assistant chat"
+          >
+            💬
+          </button>
+        ) : (
+          <div className="fixed bottom-6 right-6 w-96 max-w-xs z-50">
+            <div className="bg-white rounded-lg shadow-lg overflow-hidden border">
+              <div className="bg-red-600 text-white px-3 py-2 flex items-center justify-between">
+                <div className="font-semibold">Build Assistant</div>
+                <div className="flex items-center gap-2">
+                  {chatLoading && <div className="text-xs opacity-90">Thinking…</div>}
+                  <button onClick={() => setChatOpen(false)} className="text-white">✖</button>
+                </div>
+              </div>
+
+              <div className="p-3 max-h-60 overflow-y-auto space-y-3 bg-gray-50">
+                {messages.map((m, i) => (
+                  <div key={i} className={`${m.sender === "user" ? "text-right" : "text-left"}`}>
+                    <div className={`inline-block rounded-lg px-3 py-2 ${m.sender === "user" ? "bg-red-100 text-red-900" : "bg-white text-gray-800 shadow-sm"}`}>
+                      <div style={{ whiteSpace: "pre-wrap" }}>{m.text}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="p-3 border-t bg-white">
+                <div className="flex gap-2">
+                  <input
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") sendChat(); }}
+                    className="flex-1 border rounded px-3 py-2 text-sm focus:outline-none"
+                    placeholder="Ask about compatibility, alternatives or performance..."
+                  />
+                  <button
+                    onClick={sendChat}
+                    disabled={chatLoading}
+                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded"
+                  >
+                    Send
+                  </button>
+                </div>
+                {!genModel && (
+                  <div className="mt-2 text-xs text-yellow-700">
+                    Gemini not initialized. Add VITE_GEMINI_API_KEY in .env and install @google/generative-ai to enable the AI assistant.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
